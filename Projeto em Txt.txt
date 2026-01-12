@@ -1,0 +1,178 @@
+
+Aluno(a): Douglas Martins Oliveira
+Orientador(a): Gustavo Nazato Furlan
+Curso: MBA em Data Science e Analytics
+
+Previsão de Topos e Fundos no Bitcoin Utilizando 
+Algoritmos de Aprendizado Supervisionado
+
+
+Introdução
+
+O mercado de criptoativos tem se expandido rapidamente. Para fins comparativos, enquanto o valor de mercado das criptomoedas ultrapassou US$ 2,6 trilhões em 2025, o índice Ibovespa manteve uma capitalização próxima a US$ 800 bilhões no mesmo período (B3, 2025), evidenciando o crescimento muito mais acelerado e de maior magnitude do setor cripto frente aos mercados tradicionais., despertando o interesse de pesquisadores e investidores que buscam compreender os movimentos de preço e suas reversões. Segundo a CoinMarketCap (2025) e a DemandSage (2025), o valor de mercado das criptomoedas passou de aproximadamente US$ 6 bilhões em 2013 para mais de US$ 2,6 trilhões em 2025, com projeções que ultrapassam US$ 3,9 trilhões. A Grand View Research (2024) prevê que o mercado global poderá atingir cerca de US$ 11,7 trilhões até 2030, com taxa média de crescimento anual (CAGR) acima de 12%, evidenciando o amadurecimento e a consolidação do setor. Conforme Gitman e Zutter (2015), o CAGR representa a taxa média de crescimento anual de um investimento ao longo de um período específico, permitindo uma análise consistente da tendência de longo prazo.
+Esse crescimento exponencial está diretamente ligado à digitalização financeira e à adoção de tecnologias baseadas em blockchain, que transformaram o modo como ativos são negociados, armazenados e transferidos. As criptomoedas, antes restritas a um nicho tecnológico, tornaram-se um fenômeno global de investimento, influenciando mercados tradicionais e alterando o comportamento de investidores institucionais. Essa transformação é evidenciada por autores como Tapscott e Tapscott (2016), que apontam a blockchain como uma revolução na infraestrutura de confiança digital; Narayanan et al. (2016), que destacam a criação de novas dinâmicas econômicas e contratuais; e Schwab (2016), que situa essas inovações dentro da Quarta Revolução Industrial, redefinindo processos produtivos, cadeias de valor e o sistema financeiro global.
+Nesse cenário de rápida evolução tecnológica e aumento da complexidade dos mercados, compreender as oscilações de preço torna-se um desafio analítico e estratégico. A análise técnica surge como uma ferramenta amplamente utilizada para interpretar o comportamento dos preços, partindo do princípio de que o valor reflete todas as informações disponíveis e que padrões históricos tendem a se repetir (MURPHY, 1999; PRING, 2014). Em particular, os conceitos de topos e fundos — pontos de reversão que indicam potenciais mudanças de tendência — são essenciais para estratégias de entrada e saída de posições, bem como para a compreensão dos ciclos de mercado. Segundo Murphy (1999) e Pring (2014), um topo ocorre quando a força compradora se esgota após uma sequência de altas, levando a uma inversão natural do movimento, enquanto um fundo representa o ponto em que a pressão vendedora diminui, permitindo que os preços se recuperem. Em termos técnicos, essas formações resultam de desequilíbrios temporários entre oferta e demanda, sendo frequentemente identificadas por padrões gráficos, rompimentos de linhas de tendência e indicadores como médias móveis (MURPHY, 1999), IFR (Índice de Força Relativa) (WILDER, 1978) e MACD (APPEL, 2005), todos amplamente documentados na literatura de análise técnica como indicadores fundamentais para identificação de reversões de tendência. A correta identificação desses pontos é fundamental para determinar momentos de reversão e compõe a base da análise técnica moderna.
+Conforme os autores clássicos, cada indicador desempenha um papel específico na leitura de mercado. As médias móveis, segundo Murphy (1999), suavizam as flutuações de preço ao longo do tempo e permitem observar a direção predominante da tendência, servindo como suporte e resistência dinâmicos. O Índice de Força Relativa (IFR), desenvolvido por Wilder (1978), mede a velocidade e a intensidade dos movimentos de preço, variando entre 0 e 100, e é usado para identificar condições de sobrecompra (acima de 70) e sobrevenda (abaixo de 30), indicando potenciais topos e fundos. Já o MACD, proposto por Appel (2005), analisa a convergência e divergência entre médias móveis exponenciais de diferentes períodos, ajudando a detectar mudanças sutis de momentum e antecipar reversões de tendência. Esses conceitos combinados fornecem uma base quantitativa sólida para a identificação de topos e fundos e sustentam o desenvolvimento de modelos de previsão automatizados aplicados neste trabalho.
+Entretanto, apesar dos avanços em modelos de previsão de preços, poucos estudos abordam a identificação automatizada de topos e fundos, etapa crucial para estratégias de reversão e gestão de risco. Essa lacuna reflete a dificuldade em capturar padrões complexos e não lineares em séries temporais voláteis. Além disso, a dimensão comportamental dos mercados, marcada por ciclos de euforia e medo, reforça a importância de métodos capazes de traduzir essas dinâmicas psicológicas em sinais quantitativos.
+A partir desse contexto, emerge a necessidade de ferramentas analíticas mais sofisticadas. É nesse ponto que as técnicas de inteligência artificial e aprendizado supervisionado ganham destaque. Segundo Russell e Norvig (2021), a inteligência artificial é o campo da ciência da computação que busca desenvolver sistemas capazes de realizar tarefas que normalmente exigiriam inteligência humana, como percepção, raciocínio e aprendizado. Dentro desse campo, o aprendizado supervisionado — conforme Goodfellow, Bengio e Courville (2016) e Geron (2023) — refere-se ao processo no qual modelos computacionais aprendem padrões a partir de exemplos rotulados, sendo amplamente utilizado para classificação e previsão em séries temporais.
+Essas abordagens têm se mostrado especialmente úteis na análise financeira moderna, onde grandes volumes de dados e comportamentos não lineares tornam os métodos tradicionais insuficientes. Estudos como os de Fischer e Krauss (2018), Hoseinzade e Haratizadeh (2019) e Ntakaris et al. (2018) demonstram que algoritmos supervisionados — incluindo Random Forest, Redes Neurais e CNNs — podem capturar relações sutis entre indicadores técnicos e movimentos de preço, superando as limitações da análise puramente visual ou empírica.
+De acordo com Breiman (2001), o Random Forest é um algoritmo de aprendizado de conjunto baseado em múltiplas árvores de decisão que melhora a precisão preditiva ao reduzir a variância do modelo. Cada árvore é treinada em uma amostra aleatória dos dados, e a decisão final é obtida por votação, o que torna o método robusto a ruídos e outliers.
+As Redes Neurais Artificiais (RNA), segundo Haykin (2009), são sistemas computacionais inspirados na estrutura do cérebro humano, compostos por camadas de neurônios interconectados capazes de aprender representações complexas dos dados. Elas são amplamente utilizadas para capturar relações não lineares e padrões sutis em séries temporais.
+Já as Redes Neurais Convolucionais (CNNs), conforme LeCun, Bengio e Hinton (2015), foram inicialmente desenvolvidas para o processamento de imagens, mas vêm sendo aplicadas com sucesso em finanças por sua capacidade de extrair automaticamente características relevantes de sequências temporais e detectar padrões locais de comportamento de preço.
+Dessa forma, o aprendizado de máquina representa uma evolução natural na análise de séries financeiras, permitindo a construção de modelos que aprendem e se adaptam a diferentes regimes de mercado.
+Sendo assim, este projeto busca integrar fundamentos da análise técnica e técnicas de aprendizado supervisionado aplicadas a séries temporais financeiras. Espera-se contribuir para o avanço de ferramentas quantitativas de suporte à decisão, reduzindo o viés humano e aumentando a eficiência das estratégias de investimento no mercado de criptoativos. da análise técnica e técnicas de aprendizado supervisionado aplicadas a séries temporais financeiras. Espera-se contribuir para o avanço de ferramentas quantitativas de suporte à decisão, reduzindo o viés humano e aumentando a eficiência das estratégias de investimento no mercado de criptoativos.
+
+Objetivo
+
+Investigar a eficácia de algoritmos de aprendizado supervisionado na previsão de topos e fundos em séries temporais financeiras, utilizando o Bitcoin como estudo de caso representativo do mercado de criptoativos.
+Objetivos Específicos
+ 1. Coletar e tratar dados históricos do preço do Bitcoin, obtidos por meio de APIs públicas, assegurando a integridade, consistência temporal e representatividade da amostra utilizada.
+ 2. Aplicar técnicas de feature engineering para transformar os dados brutos em variáveis informativas, extraindo indicadores técnicos, estatísticos e temporais capazes de capturar padrões relevantes para a detecção de topos e fundos.
+3. Treinar e comparar diferentes algoritmos de aprendizado supervisionado, como Regressão Logística, Random Forest e Redes Neurais, avaliando sua capacidade de prever reversões de tendência no preço do Bitcoin.
+4. Avaliar a eficácia e robustez dos modelos preditivos utilizando métricas de desempenho (acurácia, precisão, recall e F1-score) e métodos de validação cruzada, identificando limitações e oportunidades de aprimoramento para estudos futuros.
+
+Metodologia ou Material e Métodos
+
+A pesquisa será de natureza aplicada e abordagem quantitativa, com delineamento experimental voltado à implementação de algoritmo(s) de Machine Learning, conforme as diretrizes do curso de MBA em Data Science e Analytics.
+	Etapas principais:
+    1. Coleta de dados: uso de APIs públicas da Binance (endpoint Klines/Candlesticks) para extrair séries históricas de preços (open, high, low, close, volume) do par BTCUSDT em janelas de 1h/4h/1d. Procedimentos: (i) fuso padronizado em UTC, (ii) checagem de rate limits, (iii) reamostragem consistente, (iv) persistência em Parquet (colunar) com versioning via Git.
+    2. Tratamento e feature engineering: cálculo de indicadores clássicos em janelas deslizantes e criação de variáveis de reversão. Cada cálculo será adicionado à uma coluna, onde representará o resultado das operações abaixo, cada indicador calculado será usado para auxiliar o modelo supervisionado na identificação de possíveis topos e fundos na série histórica. 
+        ◦ SMA (média móvel simples) Murphy (1999) e Pring (2014) , janela n:
+
+        ◦ EMA (média móvel exponencial) Murphy (1999) e Pring (2014), janela n (suavização):
+
+        ◦ RSI (WILDER, 1978), janela n:
+
+(com suavização exponencial de Wilder para ganhos/perdas médios).
+        ◦ MACD (APPEL, 2005):
+
+
+
+        ◦ 
+        ◦ Retorno logarítmico (Fan e Yao (2017):
+        ◦ 
+        ◦ Reversões locais (topo/fundo) com janela n (MURPHY, 1999; PRING, 2014):
+
+
+caso contrário 0
+(Hiperparâmetro n ajustado por validação temporal.)
+        ◦ Sinais derivados, cruzamentos de médias móveis Murphy (1999):
+
+        ◦ Divergências, Murphy (1999) 
+        ◦ Momentum, Murphy (1999)  .
+A Média Móvel Simples (SMA), conforme Murphy (1999) e Pring (2014), representa a média aritmética dos preços em um determinado período (janela n), sendo utilizada para suavizar oscilações e identificar a direção predominante da tendência. Já a Média Móvel Exponencial (EMA), descrita pelos mesmos autores, aplica maior peso aos preços mais recentes, reagindo mais rapidamente às mudanças de mercado e capturando reversões de curto prazo com maior sensibilidade.
+O Índice de Força Relativa (RSI), proposto por Wilder (1978), mede a intensidade dos movimentos de alta e baixa, variando entre 0 e 100; valores acima de 70 indicam sobrecompra e abaixo de 30 sugerem sobrevenda, utilizando uma suavização exponencial para ganhos e perdas médios.
+O MACD (Moving Average Convergence Divergence), desenvolvido por Appel (2005), é baseado na diferença entre duas médias móveis exponenciais e serve para identificar mudanças no momentum do preço e possíveis pontos de entrada ou saída.
+O Retorno Logarítmico, segundo Fan e Yao (2017), expressa a variação proporcional entre preços consecutivos por meio do logaritmo natural, permitindo uma análise aditiva e estatisticamente estável da rentabilidade ao longo do tempo.
+As Reversões Locais, conforme Murphy (1999) e Pring (2014), correspondem aos topos e fundos da série, sendo pontos onde o movimento de preço perde força e tende a inverter a direção — elementos centrais para a identificação de ciclos de mercado.
+Os Cruzamentos de Médias Móveis, conforme Murphy (1999), ocorrem quando uma média de curto prazo ultrapassa uma de longo prazo, gerando sinais de compra ou venda que indicam possíveis mudanças de tendência.
+As Divergências entre preço e indicadores, também destacadas por Murphy (1999), surgem quando o preço atinge novos extremos sem confirmação do RSI ou MACD, sinalizando perda de força da tendência e possível reversão.
+Por fim, o Momentum, segundo Murphy (1999), reflete a velocidade de variação dos preços, medindo a força da tendência e auxiliando na detecção de períodos de aceleração ou desaceleração do mercado.
+A escolha desses indicadores fundamenta-se em sua ampla utilização e validação tanto na literatura clássica de análise técnica quanto em estudos modernos de modelagem quantitativa. Conforme Murphy (1999) e Pring (2014), médias móveis, RSI, MACD e momentum são ferramentas consagradas para identificar tendências, reversões e força do movimento, permitindo traduzir o comportamento do mercado em variáveis objetivas. Esses indicadores foram selecionados por capturarem diferentes dimensões do preço: direção (SMA e EMA), força (RSI e Momentum) e mudança de ritmo (MACD e divergências). Já o retorno logarítmico, segundo Fan e Yao (2017), fornece uma medida estatisticamente robusta de variação percentual contínua, adequada para análises matemáticas e de aprendizado de máquina. Em conjunto, esses elementos oferecem uma base sólida e interpretável para representar a dinâmica do Bitcoin, equilibrando simplicidade, relevância teórica e capacidade preditiva — aspectos essenciais para a construção de modelos supervisionados em séries temporais financeiras
+    3. Rotulagem supervisionada: A etapa de rotulagem supervisionada em séries temporais financeiras busca identificar padrões históricos que indiquem reversões de tendência, atribuindo rótulos (classes) a pontos característicos da série, como topos e fundos. Segundo Murphy (1999), os padrões de reversão e os pontos de inflexão de preço são identificados quando o movimento atual perde força em relação aos períodos anteriores — ou seja, quando há uma mudança na sequência de máximas e mínimas.
+O autor descreve que a confirmação de um topo ocorre quando o preço atinge um novo máximo e, nas sessões seguintes, falha em superá-lo, iniciando uma sequência descendente. Analogamente, um fundo é confirmado quando o preço forma um novo mínimo seguido de uma recuperação consistente.
+Essas descrições se traduzem matematicamente na ideia de uma janela temporal [t-lb, t+lf], onde se observa se Closeₜ representa um máximo (topo) ou mínimo (fundo) local dentro de um intervalo limitado no tempo. Do ponto de vista computacional, Goodfellow, Bengio e Courville (2016) e Geron (2023) fundamentam o processo de rotulagem supervisionada, em que um modelo aprende padrões a partir de exemplos rotulados. Esses autores destacam a importância de garantir que as previsões usem apenas informações conhecidas até o instante t, evitando o chamado look-ahead bias — princípio que se conecta diretamente à sua descrição de “predição em t usa apenas dados ≤ t” 
+    4. Nesta etapa, será realizada a fase de treinamento, validação e teste dos algoritmos supervisionados, com o objetivo de avaliar a capacidade dos modelos em identificar padrões de reversão (topos e fundos) a partir das variáveis derivadas da análise técnica.
+A divisão dos dados seguirá uma estrutura temporal, preservando a sequência cronológica da série, de modo a evitar vazamento de informações futuras (data leakage). Os dados serão particionados em três subconjuntos:
+        ◦ Treinamento (≈ 60%): utilizado para o ajuste inicial dos parâmetros dos modelos;
+        ◦ Validação (≈ 20%): destinado à calibração de hiperparâmetros e detecção de sobreajuste (overfitting);
+        ◦ Teste (≈ 20%): empregado para a avaliação final do desempenho preditivo em dados não vistos.
+Será utilizada a técnica TimeSeriesSplit (validação cruzada temporal), que executa divisões sucessivas no tempo, garantindo que cada conjunto de treino preceda cronologicamente o de validação, conforme as boas práticas descritas por Geron (2023) e Goodfellow, Bengio e Courville (2016).
+    5. Modelos a serem avaliados:
+        ◦ Modelo linear supervisionado, a regressão logística é amplamente utilizada para tarefas de classificação binária em contextos financeiros devido à sua interpretabilidade (JAMES et al., 2023).
+        ◦ Random Forest (BREIMAN, 2001), algoritmo baseado em conjunto de árvores de decisão (ensemble), que reduz a variância e aumenta a robustez do modelo ao combinar diversas árvores independentes. Serão ajustados hiperparâmetros principais como número de árvores (n_estimators), profundidade máxima (max_depth), número máximo de atributos considerados por divisão (max_features) e tamanho mínimo das folhas (min_samples_leaf). Conforme Breiman (2001), o método é adequado para dados ruidosos e não lineares, sendo amplamente aplicado em finanças para classificação de regimes de mercado.
+        ◦ Redes Neurais Feedforward (HAYKIN, 2009), arquitetura de múltiplas camadas densas com função de ativação ReLU, dropout para regularização e early stopping para interromper o treinamento quando não houver melhora significativa na validação. Segundo Haykin (2009), as redes neurais são capazes de modelar relações não lineares complexas e capturar dependências sutis entre variáveis em séries temporais financeiras.
+    6. Validação e métricas: A validação dos modelos será conduzida de forma temporal, utilizando a técnica TimeSeriesSplit, que respeita a sequência cronológica dos dados e evita o uso de informações futuras no processo de treino, conforme as boas práticas indicadas por Geron (2023).
+A avaliação de desempenho será realizada por meio das principais métricas de classificação supervisionada — acurácia, precisão, recall e F1-score — amplamente utilizadas para medir a capacidade do modelo em distinguir corretamente as classes previstas.
+De acordo com Provost e Fawcett (2023), a acurácia indica a proporção total de previsões corretas e fornece uma visão geral do desempenho do modelo, embora possa ser sensível a desbalanceamentos entre classes.:
+        ◦ A precisão reflete o quanto das previsões positivas realmente corresponde a casos verdadeiros, sendo útil quando o custo de um falso positivo é alto.
+        ◦ O recall, por sua vez, expressa a capacidade do modelo em identificar corretamente todos os casos positivos existentes, sendo importante em contextos onde a omissão de um evento relevante (falso negativo) é mais crítica.
+        ◦ Por fim, o F1-score combina precisão e recall em uma única medida harmônica, fornecendo um equilíbrio entre ambas as perspectivas e permitindo uma comparação mais justa entre modelos.
+        ◦ Também serão analisadas as curvas ROC e Precision-Recall, que permitem visualizar o comportamento do classificador em diferentes limiares de decisão, bem como a matriz de confusão, que resume o desempenho por classe (topo e fundo), facilitando a identificação dos tipos de erro mais frequentes.
+    7. Ferramentas: Python 3.11 com pandas, numpy, ta, scikit-learn 1.5 e TensorFlow/Keras 2.x; ambiente Jupyter/VS Code, seeds reprodutíveis, requirements.txt.Implementação seguindo as referências clássicas (WILDER, 1978; APPEL, 2005; MURPHY, 1999; BREIMAN, 2001; HAYKIN, 2009).
+Os dados utilizados serão de acesso público e livre, não envolvendo informações pessoais ou institucionais. Portanto, não há necessidade de submissão ao Comitê de Ética (CEP), conforme Resolução CNS nº 510/2016, inciso II.
+
+Resultados Esperados
+
+Espera-se demonstrar a viabilidade da aplicação de algoritmos supervisionados na detecção de padrões de reversão de tendência em séries temporais de criptomoedas, obtendo métricas de desempenho satisfatórias e boa capacidade de generalização. Além disso, o modelo poderá ser adaptado a outras classes de ativos financeiros, reforçando sua utilidade em estratégias quantitativas e automatizadas de investimento.
+O trabalho busca contribuir para o campo de Data Science aplicada a finanças, fornecendo uma abordagem robusta para identificar padrões de reversão, ao mesmo tempo em que evidencia desafios como o ruído excessivo dos dados, o risco de overfitting e a dificuldade de generalização entre diferentes ativos e períodos de mercado.
+
+Cronograma de Atividades
+
+Atividade
+Out/2025
+Nov/2025
+Dez/2025
+Jan/2026
+Fev/2026
+Mar/2026
+Revisão bibliográfica e definição das variáveis
+✅
+
+
+
+
+
+Coleta e tratamento de dados
+
+✅
+
+
+
+
+Implementação dos modelos de ML
+
+✅
+✅
+
+
+
+Testes, métricas e visualizações
+
+
+✅
+✅
+
+
+Redação dos resultados e conclusões
+
+
+
+✅
+✅
+
+Revisão e entrega final do TCC
+
+
+
+
+✅
+✅
+
+Referências 
+APPEL, G. 2005. Technical Analysis: Power Tools for Active Investors. Financial Times Press, Upper Saddle River, NJ, EUA.
+B3 - BRASIL, BOLSA, BALCÃO. 2025. Relatório de Capitalização de Mercado e Indicadores do Ibovespa. Disponível em: https://www.b3.com.br. Acesso em: out. 2025.
+BINANCE. 2025. Binance API Documentation. Disponível em: https://binance-docs.github.io. Acesso em: out. 2025.
+COINMARKETCAP. 2025. Global Cryptocurrency Market Capitalization Data. Disponível em: https://coinmarketcap.com/. Acesso em: out. 2025.
+DEMANDSAGE. 2025. Cryptocurrency Market Size & Growth Report. Disponível em: https://www.demandsage.com/cryptocurrency-market-size/. Acesso em: out. 2025.
+FAN, J.; YAO, Q. The Elements of Financial Econometrics. Cambridge University Press, Cambridge, UK, 2017.
+FISCHER, T.; KRAUSS, C. 2018. Deep learning with long short-term memory networks for financial market predictions. European Journal of Operational Research, 270(2):654–669.
+GERON, A. 2023. Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow. 3rd ed. O’Reilly Media, EUA.
+GIL, A. C. 2017. Métodos e técnicas de pesquisa social. 7. ed. Atlas, São Paulo, SP, Brasil.
+GITMAN, L. J.; ZUTTER, C. J. 2015. Principles of Managerial Finance. 14th ed. Pearson Education, Boston, MA, EUA.
+GOODFELLOW, I.; BENGIO, Y.; COURVILLE, A. 2016. Deep Learning. MIT Press, Cambridge, MA, EUA.
+GRAND VIEW RESEARCH. 2024. Cryptocurrency Market Size, Share & Trends Analysis Report. Disponível em: https://www.grandviewresearch.com/industry-analysis/cryptocurrency-market. Acesso em: out. 2025.
+HOSEINZADE, E.; HARATIZADEH, S. 2019. CNNpred: CNN-based stock market prediction using a diverse set of variables. Expert Systems with Applications, 129:273–285.
+JAMES, G.; WITTEN, D.; HASTIE, T.; TIBSHIRANI, R. 2023. An Introduction to Statistical Learning with Applications in R and Python. 2nd ed. Springer, Nova Iorque, NY, EUA.
+KRAUSS, C.; DO, X. A.; HUCK, N. 2017. Deep neural networks, gradient-boosted trees, random forests: Statistical arbitrage on the S&P 500. European Journal of Operational Research, 259(2):689–702.
+MURPHY, J. J. 1999. Technical Analysis of the Financial Markets: A Comprehensive Guide to Trading Methods and Applications. New York: New York Institute of Finance.
+NAKAMOTO, S. 2008. Bitcoin: A Peer-to-Peer Electronic Cash System. Disponível em: https://bitcoin.org/bitcoin.pdf. Acesso em: out. 2025.
+NARAYANAN, A.; BONNEAU, J.; FELTEN, E.; MILLER, A.; GOLDFEDER, S. 2016. Bitcoin and Cryptocurrency Technologies: A Comprehensive Introduction. Princeton University Press, Princeton, NJ, EUA.
+NTAKARIS, A.; MIRONE, G.; GATZANIS, P.; KATEVAS, K.; KATEVAS, N. 2018. Feature engineering for mid-price prediction with deep learning. IEEE Access, 6:63279–63294.
+PRING, M. J. 2014. Technical Analysis Explained: The Successful Investor’s Guide to Spotting Investment Trends and Turning Points. 5th ed. McGraw-Hill Education, New York, NY, EUA.]
+PROVOST, F.; FAWCETT, T. 2023. Data Science for Business: What You Need to Know About Data Mining and Data-Analytic Thinking. 2nd ed. O’Reilly Media, EUA.
+RUSSELL, S.; NORVIG, P. 2021. Artificial Intelligence: A Modern Approach. 4th ed. Pearson, Harlow, England.
+SCHWAB, K. 2016. The Fourth Industrial Revolution. World Economic Forum, Geneva, Switzerland.
+TAPSCOTT, D.; TAPSCOTT, A. 2016. Blockchain Revolution: How the Technology Behind Bitcoin and Other Cryptocurrencies Is Changing the World. Penguin Random House, New York, NY, EUA.
+WILDER, J. W. 1978. New Concepts in Technical Trading Systems. Trend Research, Greensboro, NC, EUA.
+ZANELLA, L. C. H. 2013. Metodologia da pesquisa científica. UFSC, Florianópolis, SC, Brasil.
