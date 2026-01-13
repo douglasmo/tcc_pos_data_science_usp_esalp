@@ -3,16 +3,28 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import TimeSeriesSplit, RandomizedSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.layers import Dense, Dropout, LSTM
 from tensorflow.keras.callbacks import EarlyStopping
 
 from sklearn.preprocessing import RobustScaler
 from sklearn.utils import class_weight
+
+def create_sequences(X, y, time_steps=10):
+    """
+    Transform 2D data into 3D sequences for LSTM.
+    [samples, features] -> [samples - time_steps, time_steps, features]
+    """
+    Xs, ys = [], []
+    for i in range(len(X) - time_steps):
+        v = X[i:(i + time_steps)]
+        Xs.append(v)
+        ys.append(y.iloc[i + time_steps])
+    return np.array(Xs), np.array(ys)
 
 def train_eval_models(df):
     # Features and Target
@@ -35,71 +47,138 @@ def train_eval_models(df):
     X_train_val_scaled = scaler.fit_transform(X_train_val)
     X_test_scaled = scaler.transform(X_test)
     
-    # Store test price for plotting
-    test_dates = df['timestamp'].iloc[split_idx:]
-    test_close = df['close'].iloc[split_idx:]
+    # Time steps for LSTM (look back 10 candles)
+    TIME_STEPS = 10
+    
+    # Store test metadata before sequence creation
+    test_dates = df['timestamp'].iloc[split_idx + TIME_STEPS:]
+    test_close = df['close'].iloc[split_idx + TIME_STEPS:]
+    y_test_final = y_test[TIME_STEPS:]
 
-    print(f"Train size: {len(X_train_val_scaled)}")
-    print(f"Test size: {len(X_test)}")
+    # Create Sequences for Neural Network
+    X_train_seq, y_train_seq = create_sequences(X_train_val_scaled, y_train_val, TIME_STEPS)
+    X_test_seq, y_test_seq = create_sequences(X_test_scaled, y_test, TIME_STEPS)
+
+    print(f"Train size: {len(X_train_val_scaled)}, LSTM Sequences: {X_train_seq.shape}")
+    print(f"Test size: {len(X_test_scaled)}, LSTM Sequences: {X_test_seq.shape}")
 
     results = {}
+    tscv = TimeSeriesSplit(n_splits=3)
 
-    # 1. Logistic Regression
-    print("\nTraining Logistic Regression...")
-    lr = LogisticRegression(max_iter=1000, class_weight='balanced')
-    lr.fit(X_train_val_scaled, y_train_val)
-    y_pred_lr = lr.predict(X_test_scaled)
-    results['Logistic Regression'] = {
-        'accuracy': accuracy_score(y_test, y_pred_lr),
-        'f1_macro': f1_score(y_test, y_pred_lr, average='macro'),
-        'report': classification_report(y_test, y_pred_lr),
-        'y_pred': y_pred_lr
-    }
-
-    # 2. Random Forest
-    print("Training Random Forest...")
-    rf = RandomForestClassifier(n_estimators=100, max_depth=10, class_weight='balanced', random_state=42)
-    rf.fit(X_train_val_scaled, y_train_val)
-    y_pred_rf = rf.predict(X_test_scaled)
-    results['Random Forest'] = {
-        'accuracy': accuracy_score(y_test, y_pred_rf),
-        'f1_macro': f1_score(y_test, y_pred_rf, average='macro'),
-        'report': classification_report(y_test, y_pred_rf),
-        'y_pred': y_pred_rf
-    }
-
-    # 3. Neural Network (MLP)
-    print("Training Neural Network...")
+    # 1. Logistic Regression with Random Search
+    print("\nTraining Logistic Regression (Optimizing with Random Search)...")
+    lr_base = LogisticRegression(max_iter=2000, class_weight='balanced')
     
-    # Calculate class weights for Keras
-    cw = class_weight.compute_class_weight('balanced', classes=np.unique(y_train_val), y=y_train_val)
+    # Hyperparameter Grid for LR
+    param_dist_lr = {
+        'C': np.logspace(-4, 4, 50), # Explore from 0.0001 to 10000
+        'penalty': ['l1', 'l2'],
+        'solver': ['liblinear', 'saga'] # Compatible with l1 and l2
+    }
+    
+    lr_random = RandomizedSearchCV(
+        estimator=lr_base,
+        param_distributions=param_dist_lr,
+        n_iter=15,
+        cv=tscv,
+        verbose=0,
+        random_state=42,
+        n_jobs=-1,
+        scoring='f1_macro'
+    )
+    
+    lr_random.fit(X_train_val_scaled, y_train_val)
+    best_lr = lr_random.best_estimator_
+    print(f"Best LR Params: {lr_random.best_params_}")
+    
+    y_pred_lr = best_lr.predict(X_test_scaled)
+    # Align with TIME_STEPS shift for consistent comparison
+    y_pred_lr_aligned = y_pred_lr[TIME_STEPS:] 
+    
+    results['Logistic Regression (Optimized)'] = {
+        'accuracy': accuracy_score(y_test_final, y_pred_lr_aligned),
+        'f1_macro': f1_score(y_test_final, y_pred_lr_aligned, average='macro'),
+        'report': classification_report(y_test_final, y_pred_lr_aligned),
+        'y_pred': y_pred_lr_aligned
+    }
+
+    # 2. Random Forest with Random Search
+    print("Training Random Forest (Optimizing with Random Search)...")
+    rf_base = RandomForestClassifier(class_weight='balanced', random_state=42)
+    
+    # Hyperparameter Grid
+    param_dist = {
+        'n_estimators': [50, 100, 200],
+        'max_depth': [5, 10, 20, None],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4]
+    }
+    
+    # Random Search with TimeSeriesSplit (crucial for financial data!)
+    rf_random = RandomizedSearchCV(
+        estimator=rf_base, 
+        param_distributions=param_dist, 
+        n_iter=10, # Test 10 random combinations
+        cv=tscv, 
+        verbose=0, 
+        random_state=42, 
+        n_jobs=-1,
+        scoring='f1_macro'
+    )
+    
+    rf_random.fit(X_train_val_scaled, y_train_val)
+    best_rf = rf_random.best_estimator_
+    print(f"Best RF Params: {rf_random.best_params_}")
+    
+    y_pred_rf = best_rf.predict(X_test_scaled)
+    y_pred_rf_aligned = y_pred_rf[TIME_STEPS:]
+
+    results['Random Forest (Optimized)'] = {
+        'accuracy': accuracy_score(y_test_final, y_pred_rf_aligned),
+        'f1_macro': f1_score(y_test_final, y_pred_rf_aligned, average='macro'),
+        'report': classification_report(y_test_final, y_pred_rf_aligned),
+        'y_pred': y_pred_rf_aligned
+    }
+
+    # Calculate class weights for LSTM
+    cw = class_weight.compute_class_weight('balanced', classes=np.unique(y_train_seq), y=y_train_seq)
     cw_dict = {i: cw[i] for i in range(len(cw))}
     
     model = Sequential([
-        Dense(64, activation='relu', input_shape=(len(features),)),
+        LSTM(64, return_sequences=True, input_shape=(X_train_seq.shape[1], X_train_seq.shape[2])),
         Dropout(0.3),
-        Dense(32, activation='relu'),
+        LSTM(32),
         Dropout(0.2),
+        Dense(16, activation='relu'),
         Dense(3, activation='softmax')
     ])
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     
-    early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+    early_stop = EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True)
     
-    # We use class weights instead of resampling to avoid leakage in validation_split
-    model.fit(X_train_val_scaled, y_train_val, epochs=100, batch_size=64, validation_split=0.2, callbacks=[early_stop], verbose=0, class_weight=cw_dict)
+    model.fit(X_train_seq, y_train_seq, epochs=100, batch_size=32, validation_split=0.2, callbacks=[early_stop], verbose=0, class_weight=cw_dict)
     
-    y_pred_nn_probs = model.predict(X_test_scaled)
-    y_pred_nn = np.argmax(y_pred_nn_probs, axis=1)
+    y_pred_nn_probs = model.predict(X_test_seq)
     
-    results['Neural Network'] = {
-        'accuracy': accuracy_score(y_test, y_pred_nn),
-        'f1_macro': f1_score(y_test, y_pred_nn, average='macro'),
-        'report': classification_report(y_test, y_pred_nn),
+    # Confidence Threshold Logic: Increase precision by only accepting certain predictions
+    CONF_THRESHOLD = 0.45  # Lowered to capture more significant pivots while still filtering noise
+    y_pred_nn = []
+    for probs in y_pred_nn_probs:
+        p_max_idx = np.argmax(probs)
+        if p_max_idx != 0 and probs[p_max_idx] > CONF_THRESHOLD:
+            y_pred_nn.append(p_max_idx)
+        else:
+            y_pred_nn.append(0)
+    y_pred_nn = np.array(y_pred_nn)
+    
+    results['Neural Network (LSTM)'] = {
+        'accuracy': accuracy_score(y_test_seq, y_pred_nn),
+        'f1_macro': f1_score(y_test_seq, y_pred_nn, average='macro'),
+        'report': classification_report(y_test_seq, y_pred_nn),
         'y_pred': y_pred_nn
     }
 
-    return results, y_test, test_dates, test_close
+    return results, y_test_seq, test_dates, test_close
 
 def plot_confusion_matrix(y_test, y_pred, model_name):
     plt.figure(figsize=(8, 6))

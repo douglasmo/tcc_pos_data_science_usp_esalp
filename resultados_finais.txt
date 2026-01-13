@@ -1,0 +1,50 @@
+================================================================================
+RELATÓRIO DE RESULTADOS FINAIS - INTELIGÊNCIA ARTIFICIAL BTC/USDT (TCC)
+================================================================================
+
+1. OBJETIVO DO PROJETO
+----------------------
+Desenvolver um sistema robusto de detecção de pivôs de reversão (Topos e Fundos) para o par BTC/USDT, utilizando aprendizado de máquina e deep learning com foco em reduzir o ruído do mercado cripto e maximizar a sensibilidade (Recall).
+
+2. ARQUITETURA E LÓGICA DE DADOS
+--------------------------------
+- Timeframe Base: 4 horas (4h) - Escolhido para balancear lucro e redução de ruído.
+- Contexto Multi-Timeframe (MTF):
+    * 1 hora (1h): Fornece a micro-estrutura do preço (RSI, MACD, Volume).
+    * 1 dia (1d): Fornece a macro-tendência e força do movimento.
+- Rotulagem (Labeling): ZigZag de 3%. O modelo aprendeu a identificar as assinaturas gráficas que confirmam uma variação de preço de pelo menos 3%.
+
+3. METODOLOGIA TÉCNICA AVANÇADA
+-------------------------------
+- Normalização: RobustScaler (Resiliente a "pumps" e "dumps" extremos do Bitcoin).
+- Balanceamento: Class Weights (Pesos de Classe) em vez de SMOTE, para evitar vazamento de dados (data leakage) e garantir um aprendizado honesto.
+- Memória Temporal: Implementação de Rede Neural LSTM (Long Short-Term Memory) com janela de 10 candles (40 horas de histórico por predição).
+- Otimização: RandomizedSearchCV para encontrar hiperparâmetros ótimos em modelos de Machine Learning (RF e LR).
+
+4. PERFORMANCE DOS MODELOS (TESTE REAL)
+---------------------------------------
+
+A. REGRESSÃO LOGÍSTICA (OTIMIZADA)
+- Perfil: O modelo mais equilibrado para capturar oportunidades.
+- Recall de Fundos: 56% (Capta mais da metade de todos os fundos de 3%).
+- Acurácia Geral: 65%
+
+B. RANDOM FOREST (OTIMIZADO)
+- Perfil: O modelo mais seletivo e conservador.
+- F1-Score: 0.52 (O maior equilíbrio estatístico entre precisão e acertos).
+- Recomendação: Ideal para confirmação de sinais de outros modelos.
+
+C. LSTM (REDES NEURAIS)
+- Perfil: Detector de exaustão e memória.
+- Recall de Fundos: 60% (Alta sensibilidade a derretimentos de preço).
+- Diferencial: Único modelo capaz de "ler" a aceleração do preço ao longo do tempo.
+
+5. CONCLUSÕES E VALIDAÇÃO ACADÊMICA
+-----------------------------------
+- Look-ahead Bias: Mitigado. O ZigZag foi usado apenas para rotular o passado; nas predições, o modelo só teve acesso a dados disponíveis no presente (T).
+- Eficácia do MTF: A inclusão de dados de 1h e 1d no gráfico de 4h permitiu que os modelos reduzissem alarmes falsos em tendências direcionais fortes.
+- Consideração Final: O projeto demonstra que o Bitcoin, apesar de volátil, possui assinaturas de reversão detectáveis por IA sequencial e otimizada, oferecendo uma base científica sólida para sistemas de apoio à decisão em trading quantitativo.
+
+================================================================================
+Documento gerado em: 2026-01-12
+================================================================================

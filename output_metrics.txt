@@ -1,48 +1,48 @@
 
---- Logistic Regression ---
-Accuracy: 0.4925
-F1 Macro: 0.3759
+--- Logistic Regression (Optimized) ---
+Accuracy: 0.6521
+F1 Macro: 0.4197
 Classification Report:
               precision    recall  f1-score   support
 
-           0       0.94      0.47      0.63       342
-           1       0.18      0.55      0.27        31
-           2       0.14      0.72      0.23        25
+           0       0.91      0.70      0.79       332
+           1       0.24      0.26      0.25        31
+           2       0.14      0.56      0.23        25
 
-    accuracy                           0.49       398
-   macro avg       0.42      0.58      0.38       398
-weighted avg       0.83      0.49      0.57       398
+    accuracy                           0.65       388
+   macro avg       0.43      0.50      0.42       388
+weighted avg       0.80      0.65      0.71       388
 
 ========================================
 
---- Random Forest ---
-Accuracy: 0.8467
-F1 Macro: 0.3832
+--- Random Forest (Optimized) ---
+Accuracy: 0.8299
+F1 Macro: 0.5237
 Classification Report:
               precision    recall  f1-score   support
 
-           0       0.86      0.97      0.92       342
-           1       0.25      0.03      0.06        31
-           2       0.33      0.12      0.18        25
+           0       0.89      0.92      0.91       332
+           1       0.42      0.26      0.32        31
+           2       0.33      0.36      0.35        25
 
-    accuracy                           0.85       398
-   macro avg       0.48      0.38      0.38       398
-weighted avg       0.78      0.85      0.80       398
+    accuracy                           0.83       388
+   macro avg       0.55      0.51      0.52       388
+weighted avg       0.82      0.83      0.82       388
 
 ========================================
 
---- Neural Network ---
-Accuracy: 0.4070
-F1 Macro: 0.2828
+--- Neural Network (LSTM) ---
+Accuracy: 0.4046
+F1 Macro: 0.2937
 Classification Report:
               precision    recall  f1-score   support
 
-           0       0.89      0.41      0.56       342
-           1       0.10      0.48      0.16        31
-           2       0.08      0.28      0.12        25
+           0       0.90      0.40      0.55       332
+           1       0.12      0.29      0.17        31
+           2       0.09      0.60      0.16        25
 
-    accuracy                           0.41       398
-   macro avg       0.36      0.39      0.28       398
-weighted avg       0.78      0.41      0.50       398
+    accuracy                           0.40       388
+   macro avg       0.37      0.43      0.29       388
+weighted avg       0.78      0.40      0.50       388
 
 ========================================
