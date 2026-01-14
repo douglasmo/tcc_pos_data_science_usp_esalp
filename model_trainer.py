@@ -16,7 +16,7 @@ from sklearn.utils import class_weight
 
 def create_sequences(X, y, time_steps=10):
     """
-    Transform 2D data into 3D sequences for LSTM.
+    Transforma dados 2D em sequências 3D para LSTM.
     [samples, features] -> [samples - time_steps, time_steps, features]
     """
     Xs, ys = [], []
@@ -27,7 +27,7 @@ def create_sequences(X, y, time_steps=10):
     return np.array(Xs), np.array(ys)
 
 def train_eval_models(df):
-    # Features and Target
+    # Variáveis explicativas (Features) e Alvo (Target)
     features = [
         'close_vs_sma20', 'rsi', 'macd_diff', 'log_return', 'momentum', 'bb_width',
         'obv', 'mfi', 'rsi_lag1', 'rsi_lag2', 'macd_diff_lag1', 'macd_diff_lag2',
@@ -37,43 +37,43 @@ def train_eval_models(df):
     X = df[features]
     y = df['label']
 
-    # Split: 80% train+val, 20% test
+    # Divisão: 80% treino+val, 20% teste
     split_idx = int(len(df) * 0.8)
     X_train_val, X_test = X[:split_idx], X[split_idx:]
     y_train_val, y_test = y[:split_idx], y[split_idx:]
     
-    # Scaling - RobustScaler handles outliers better in financial data
+    # Escalonamento - RobustScaler lida melhor com outliers em dados financeiros
     scaler = RobustScaler()
     X_train_val_scaled = scaler.fit_transform(X_train_val)
     X_test_scaled = scaler.transform(X_test)
     
-    # Time steps for LSTM (look back 10 candles)
+    # Time steps para LSTM (retrocesso de 10 velas)
     TIME_STEPS = 10
     
-    # Store test metadata before sequence creation
+    # Armazena metadados de teste antes da criação das sequências
     test_dates = df['timestamp'].iloc[split_idx + TIME_STEPS:]
     test_close = df['close'].iloc[split_idx + TIME_STEPS:]
     y_test_final = y_test[TIME_STEPS:]
 
-    # Create Sequences for Neural Network
+    # Cria sequências para a Rede Neural
     X_train_seq, y_train_seq = create_sequences(X_train_val_scaled, y_train_val, TIME_STEPS)
     X_test_seq, y_test_seq = create_sequences(X_test_scaled, y_test, TIME_STEPS)
 
-    print(f"Train size: {len(X_train_val_scaled)}, LSTM Sequences: {X_train_seq.shape}")
-    print(f"Test size: {len(X_test_scaled)}, LSTM Sequences: {X_test_seq.shape}")
+    print(f"Tamanho do treino: {len(X_train_val_scaled)}, Sequências LSTM: {X_train_seq.shape}")
+    print(f"Tamanho do teste: {len(X_test_scaled)}, Sequências LSTM: {X_test_seq.shape}")
 
     results = {}
     tscv = TimeSeriesSplit(n_splits=3)
 
-    # 1. Logistic Regression with Random Search
-    print("\nTraining Logistic Regression (Optimizing with Random Search)...")
+    # 1. Regressão Logística com Random Search
+    print("\nTreinando Regressão Logística (Otimizando com Random Search)...")
     lr_base = LogisticRegression(max_iter=2000, class_weight='balanced')
     
-    # Hyperparameter Grid for LR
+    # Grade de hiperparâmetros para Regressão Logística
     param_dist_lr = {
-        'C': np.logspace(-4, 4, 50), # Explore from 0.0001 to 10000
+        'C': np.logspace(-4, 4, 50), # Explora de 0.0001 a 10000
         'penalty': ['l1', 'l2'],
-        'solver': ['liblinear', 'saga'] # Compatible with l1 and l2
+        'solver': ['liblinear', 'saga'] # Compatível com l1 e l2
     }
     
     lr_random = RandomizedSearchCV(
@@ -89,10 +89,10 @@ def train_eval_models(df):
     
     lr_random.fit(X_train_val_scaled, y_train_val)
     best_lr = lr_random.best_estimator_
-    print(f"Best LR Params: {lr_random.best_params_}")
+    print(f"Melhores parâmetros RL: {lr_random.best_params_}")
     
     y_pred_lr = best_lr.predict(X_test_scaled)
-    # Align with TIME_STEPS shift for consistent comparison
+    # Alinha com o deslocamento de TIME_STEPS para uma comparação consistente
     y_pred_lr_aligned = y_pred_lr[TIME_STEPS:] 
     
     results['Logistic Regression (Optimized)'] = {
@@ -102,11 +102,11 @@ def train_eval_models(df):
         'y_pred': y_pred_lr_aligned
     }
 
-    # 2. Random Forest with Random Search
-    print("Training Random Forest (Optimizing with Random Search)...")
+    # 2. Random Forest com Random Search
+    print("Treinando Random Forest (Otimizando com Random Search)...")
     rf_base = RandomForestClassifier(class_weight='balanced', random_state=42)
     
-    # Hyperparameter Grid
+    # Grade de hiperparâmetros
     param_dist = {
         'n_estimators': [50, 100, 200],
         'max_depth': [5, 10, 20, None],
@@ -114,11 +114,11 @@ def train_eval_models(df):
         'min_samples_leaf': [1, 2, 4]
     }
     
-    # Random Search with TimeSeriesSplit (crucial for financial data!)
+    # Random Search com TimeSeriesSplit (crucial para dados financeiros!)
     rf_random = RandomizedSearchCV(
         estimator=rf_base, 
         param_distributions=param_dist, 
-        n_iter=10, # Test 10 random combinations
+        n_iter=10, # Testa 10 combinações aleatórias
         cv=tscv, 
         verbose=0, 
         random_state=42, 
@@ -128,7 +128,7 @@ def train_eval_models(df):
     
     rf_random.fit(X_train_val_scaled, y_train_val)
     best_rf = rf_random.best_estimator_
-    print(f"Best RF Params: {rf_random.best_params_}")
+    print(f"Melhores parâmetros RF: {rf_random.best_params_}")
     
     y_pred_rf = best_rf.predict(X_test_scaled)
     y_pred_rf_aligned = y_pred_rf[TIME_STEPS:]
@@ -140,7 +140,7 @@ def train_eval_models(df):
         'y_pred': y_pred_rf_aligned
     }
 
-    # Calculate class weights for LSTM
+    # Calcula pesos das classes para LSTM
     cw = class_weight.compute_class_weight('balanced', classes=np.unique(y_train_seq), y=y_train_seq)
     cw_dict = {i: cw[i] for i in range(len(cw))}
     
@@ -156,12 +156,12 @@ def train_eval_models(df):
     
     early_stop = EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True)
     
-    model.fit(X_train_seq, y_train_seq, epochs=100, batch_size=32, validation_split=0.2, callbacks=[early_stop], verbose=0, class_weight=cw_dict)
+    model.fit(X_train_seq, y_train_seq, epochs=100, batch_size=32, validation_split=0.2, callbacks=[early_stop], verbose=1, class_weight=cw_dict)
     
     y_pred_nn_probs = model.predict(X_test_seq)
     
-    # Confidence Threshold Logic: Increase precision by only accepting certain predictions
-    CONF_THRESHOLD = 0.45  # Lowered to capture more significant pivots while still filtering noise
+    # Lógica de Limiar de Confiança: Aumenta a precisão aceitando apenas certas previsões
+    CONF_THRESHOLD = 0.45  # Reduzido para capturar pivôs mais significativos, mantendo a filtragem de ruído
     y_pred_nn = []
     for probs in y_pred_nn_probs:
         p_max_idx = np.argmax(probs)
@@ -180,45 +180,51 @@ def train_eval_models(df):
 
     return results, y_test_seq, test_dates, test_close
 
-def plot_confusion_matrix(y_test, y_pred, model_name):
+def plot_confusion_matrix(y_test, y_pred, model_name, show=False):
     plt.figure(figsize=(8, 6))
     cm = confusion_matrix(y_test, y_pred)
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Nothing', 'Top', 'Bottom'], yticklabels=['Nothing', 'Top', 'Bottom'])
-    plt.title(f'Confusion Matrix - {model_name}')
-    plt.ylabel('Actual')
-    plt.xlabel('Predicted')
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Nada', 'Topo', 'Fundo'], yticklabels=['Nada', 'Topo', 'Fundo'])
+    plt.title(f'Matrix de Confusão - {model_name}')
+    plt.ylabel('Real')
+    plt.xlabel('Previsto')
     os.makedirs('plots', exist_ok=True)
     plt.savefig(f'plots/cm_{model_name.lower().replace(" ", "_")}.png')
-    plt.close()
+    if show:
+        plt.show()
+    else:
+        plt.close()
 
-def plot_predictions_on_price(dates, close, y_test, y_pred, model_name):
+def plot_predictions_on_price(dates, close, y_test, y_pred, model_name, show=False):
     """
-    Plot price with markers for correct and incorrect predictions of tops/bottoms.
+    Plota o preço com marcadores para previsões corretas e incorretas de topos/fundos.
     """
     plt.figure(figsize=(15, 7))
-    plt.plot(dates, close, label='Price', color='gray', alpha=0.5)
+    plt.plot(dates, close, label='Preço', color='gray', alpha=0.5)
     
-    # Filter only recent data if it's too large for visibility
-    # Let's take the last 200 points for a clear view
+    # Filtra apenas dados recentes se forem muito grandes para visualização
+    # Vamos pegar os últimos 200 pontos para uma visão clara
     view_slice = -200
     dates_s = dates.iloc[view_slice:]
     close_s = close.iloc[view_slice:]
     y_pred_s = y_pred[view_slice:]
     
-    # Predicted Tops (1)
+    # Topos Previstos (1)
     tops = close_s[y_pred_s == 1]
-    plt.scatter(dates_s.iloc[y_pred_s == 1], tops, color='red', label='Predicted Top', marker='v', s=100)
+    plt.scatter(dates_s.iloc[y_pred_s == 1], tops, color='red', label='Topo Previsto', marker='v', s=100)
     
-    # Predicted Bottoms (2)
+    # Fundos Previstos (2)
     bottoms = close_s[y_pred_s == 2]
-    plt.scatter(dates_s.iloc[y_pred_s == 2], bottoms, color='green', label='Predicted Bottom', marker='^', s=100)
+    plt.scatter(dates_s.iloc[y_pred_s == 2], bottoms, color='green', label='Fundo Previsto', marker='^', s=100)
     
-    plt.title(f'Price Reversion Predictions - {model_name} (Last 200 hours)')
+    plt.title(f'Previsões de Reversão de Preço - {model_name} (Últimas 200 horas)')
     plt.legend()
     plt.grid(True, alpha=0.3)
     os.makedirs('plots', exist_ok=True)
     plt.savefig(f'plots/predictions_{model_name.lower().replace(" ", "_")}.png')
-    plt.close()
+    if show:
+        plt.show()
+    else:
+        plt.close()
 
 if __name__ == "__main__":
     data_path = "data/btc_processed_4h.parquet"
@@ -227,27 +233,27 @@ if __name__ == "__main__":
         
         results, y_test, test_dates, test_close = train_eval_models(df)
         
-        print("\nSaving results and plots...")
+        print("\nSalvando resultados e gráficos...")
         with open("output_metrics.txt", "w", encoding="utf-8") as f:
             for model_name, metrics in results.items():
                 header = f"\n--- {model_name} ---\n"
                 f.write(header)
-                f.write(f"Accuracy: {metrics['accuracy']:.4f}\n")
+                f.write(f"Acurácia: {metrics['accuracy']:.4f}\n")
                 f.write(f"F1 Macro: {metrics['f1_macro']:.4f}\n")
-                f.write("Classification Report:\n")
+                f.write("Relatório de Classificação:\n")
                 f.write(metrics['report'])
                 f.write("\n" + "="*40 + "\n")
                 
-                # Print to console too
+                # Imprime no console também
                 print(header)
-                print(f"Accuracy: {metrics['accuracy']:.4f}")
+                print(f"Acurácia: {metrics['accuracy']:.4f}")
                 
-                # Plot Confusion Matrix
+                # Plota Matriz de Confusão
                 plot_confusion_matrix(y_test, metrics['y_pred'], model_name)
                 
-                # Plot Price Predictions
+                # Plota Previsões de Preço
                 plot_predictions_on_price(test_dates, test_close, y_test, metrics['y_pred'], model_name)
             
-        print("\nTraining completed. All plots and metrics saved.")
+        print("\nTreinamento concluído. Todos os gráficos e métricas salvos.")
     else:
-        print(f"File {data_path} not found.")
+        print(f"Arquivo {data_path} não encontrado.")

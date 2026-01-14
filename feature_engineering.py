@@ -5,33 +5,33 @@ import os
 
 def apply_indicators(df, prefix=""):
     """
-    Apply common technical indicators to a dataframe.
+    Aplica indicadores técnicos comuns a um dataframe.
     """
-    # SMA
+    # SMA (Média Móvel Simples)
     df[f'sma_20{prefix}'] = ta.trend.sma_indicator(df['close'], window=20)
     
-    # RSI
+    # RSI (Índice de Força Relativa)
     df[f'rsi{prefix}'] = ta.momentum.rsi(df['close'], window=14)
     
     # MACD
     macd = ta.trend.MACD(df['close'])
     df[f'macd_diff{prefix}'] = macd.macd_diff()
     
-    # Relative Position
+    # Posição Relativa
     df[f'close_vs_sma20{prefix}'] = (df['close'] - df[f'sma_20{prefix}']) / df[f'sma_20{prefix}']
     
-    # Volatility
+    # Volatilidade
     df[f'bb_width{prefix}'] = ta.volatility.bollinger_wband(df['close'])
     
     return df
 
 def apply_feature_engineering_mtf(df_1h, df_4h, df_1d):
     """
-    Merge 1h and 1d indicators into the 4h dataframe.
-    Base is now 4h.
+    Mescla indicadores de 1h e 1d no dataframe de 4h.
+    A base agora é 4h.
     """
-    print("Calculating 4h features (Base)...")
-    df_4h = apply_indicators(df_4h) # No prefix for 4h as it is the base
+    print("Calculando features de 4h (Base)...")
+    df_4h = apply_indicators(df_4h) # Sem prefixo para 4h, pois é a base
     df_4h['obv'] = ta.volume.on_balance_volume(df_4h['close'], df_4h['volume'])
     df_4h['mfi'] = ta.volume.money_flow_index(df_4h['high'], df_4h['low'], df_4h['close'], df_4h['volume'], window=14)
     df_4h['log_return'] = np.log(df_4h['close'] / df_4h['close'].shift(1))
@@ -41,33 +41,33 @@ def apply_feature_engineering_mtf(df_1h, df_4h, df_1d):
         df_4h[f'{col}_lag1'] = df_4h[col].shift(1)
         df_4h[f'{col}_lag2'] = df_4h[col].shift(2)
 
-    print("Calculating 1h and 1d reference features...")
+    print("Calculando features de referência de 1h e 1d...")
     df_1h = apply_indicators(df_1h, prefix="_1h")
     df_1d = apply_indicators(df_1d, prefix="_1d")
     
-    # Sort for merge_asof
+    # Ordena para o merge_asof
     df_1h = df_1h.sort_values('timestamp')
     df_4h = df_4h.sort_values('timestamp')
     df_1d = df_1d.sort_values('timestamp')
     
-    print("Merging timeframes into 4h base...")
-    # Merge 1h into 4h (taking the state of 1h at the time of 4h candle)
+    print("Mesclando tempos gráficos na base de 4h...")
+    # Mescla 1h em 4h (pegando o estado de 1h no momento da vela de 4h)
     df_merged = pd.merge_asof(df_4h, df_1h[['timestamp', 'rsi_1h', 'macd_diff_1h', 'close_vs_sma20_1h']], on='timestamp')
-    # Merge 1d into 4h
+    # Mescla 1d em 4h
     df_merged = pd.merge_asof(df_merged, df_1d[['timestamp', 'rsi_1d', 'macd_diff_1d', 'close_vs_sma20_1d']], on='timestamp')
     
     return df_merged
 
 def label_zigzag(df, threshold=0.03):
     """
-    Label tops and bottoms using ZigZag logic based on percentage variation.
-    threshold: percentage change required to confirm a reversal (e.g., 0.03 = 3%)
+    Rotula topos e fundos usando a lógica ZigZag baseada na variação percentual.
+    threshold: alteração percentual necessária para confirmar uma reversão (ex: 0.03 = 3%)
     """
     df['label'] = 0
     highs = df['high'].values
     lows = df['low'].values
     
-    trend = 0  # 1 for up, -1 for down
+    trend = 0  # 1 para alta, -1 para baixa
     current_max = highs[0]
     current_max_idx = 0
     current_min = lows[0]
@@ -91,24 +91,24 @@ def label_zigzag(df, threshold=0.03):
                 current_min = lows[i]
                 current_min_idx = i
                 
-        elif trend == 1:  # Up trend, looking for a top
+        elif trend == 1:  # Tendência de alta, procurando por um topo
             if highs[i] > current_max:
                 current_max = highs[i]
                 current_max_idx = i
             
             if lows[i] <= current_max * (1 - threshold):
-                df.at[df.index[current_max_idx], 'label'] = 1  # Top
+                df.at[df.index[current_max_idx], 'label'] = 1  # Topo
                 trend = -1
                 current_min = lows[i]
                 current_min_idx = i
                 
-        elif trend == -1:  # Down trend, looking for a bottom
+        elif trend == -1:  # Tendência de baixa, procurando por um fundo
             if lows[i] < current_min:
                 current_min = lows[i]
                 current_min_idx = i
                 
             if highs[i] >= current_min * (1 + threshold):
-                df.at[df.index[current_min_idx], 'label'] = 2  # Bottom
+                df.at[df.index[current_min_idx], 'label'] = 2  # Fundo
                 trend = 1
                 current_max = highs[i]
                 current_max_idx = i
@@ -121,17 +121,17 @@ if __name__ == "__main__":
         df_4h = pd.read_parquet("data/btc_historical_4h.parquet")
         df_1d = pd.read_parquet("data/btc_historical_1d.parquet")
         
-        print("Starting 4h-Centered Multi-Timeframe Feature Engineering...")
+        print("Iniciando Engenharia de Features Multi-Timeframe centrada em 4h...")
         df_processed = apply_feature_engineering_mtf(df_1h, df_4h, df_1d)
         
-        print("Labeling 4h pivots with ZigZag (Threshold: 3%)...")
+        print("Rotulando pivôs de 4h com ZigZag (Threshold: 3%)...")
         df_processed = label_zigzag(df_processed, threshold=0.03)
         
         df_processed = df_processed.dropna().reset_index(drop=True)
         
         output_path = "data/btc_processed_4h.parquet"
         df_processed.to_parquet(output_path, index=False)
-        print(f"4h MTF processed data saved: {len(df_processed)} records.")
-        print(f"Distribution:\n{df_processed['label'].value_counts()}")
+        print(f"Dados processados 4h MTF salvos: {len(df_processed)} registros.")
+        print(f"Distribuição:\n{df_processed['label'].value_counts()}")
     else:
-        print("Run data_handler.py first.")
+        print("Execute data_handler.py primeiro.")
