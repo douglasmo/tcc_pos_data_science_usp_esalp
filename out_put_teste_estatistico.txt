@@ -1,0 +1,35 @@
+TESTE DE HIPÓTESE ESTATÍSTICA (TOPOS E FUNDOS VS MERCADO NORMAL)
+============================================================
+
+Objetivo: Verificar se os momentos de Topo e Fundo são estatisticamente
+extremos em relação ao comportamento normal do mercado.
+
+--- Análise para Variável: RSI ---
+Média Geral (Nada): 50.9792
+Média Topos: 49.5177
+Média Fundos: 43.5316
+
+Teste t (Topo vs Nada):
+  t-stat: -0.9153, p-valor: 0.36204518
+  Significativo (p < 0.05)? NÃO
+Teste t (Fundo vs Nada):
+  t-stat: -5.6564, p-valor: 0.00000013
+  Significativo (p < 0.05)? SIM
+Teste t (Topo vs Fundo):
+  t-stat: 2.9437, p-valor: 0.00363641
+  Significativo (p < 0.05)? SIM
+
+--- Análise para Variável: BB_WIDTH ---
+Média Geral (Nada): 5.1701
+Média Topos: 7.0703
+Média Fundos: 7.6247
+
+Teste t (Topo vs Nada):
+  t-stat: 4.9361, p-valor: 0.00000284
+  Significativo (p < 0.05)? SIM
+Teste t (Fundo vs Nada):
+  t-stat: 5.8376, p-valor: 0.00000006
+  Significativo (p < 0.05)? SIM
+Teste t (Topo vs Fundo):
+  t-stat: -0.9887, p-valor: 0.32400393
+  Significativo (p < 0.05)? NÃO
