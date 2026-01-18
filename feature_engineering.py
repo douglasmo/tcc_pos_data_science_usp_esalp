@@ -44,6 +44,14 @@ def apply_feature_engineering_mtf(df_1h, df_4h, df_1d):
     print("Calculando features de referência de 1h e 1d...")
     df_1h = apply_indicators(df_1h, prefix="_1h")
     df_1d = apply_indicators(df_1d, prefix="_1d")
+
+    # FIX Corregindo Look-ahead Bias MTF: Shift de 1 para garantir que usamos apenas dados do passado
+    # Isso evita que a vela de 4h saiba o fechamento do dia antes dele acabar.
+    cols_1h = ['rsi_1h', 'macd_diff_1h', 'close_vs_sma20_1h']
+    cols_1d = ['rsi_1d', 'macd_diff_1d', 'close_vs_sma20_1d']
+    
+    df_1h[cols_1h] = df_1h[cols_1h].shift(1)
+    df_1d[cols_1d] = df_1d[cols_1d].shift(1)
     
     # Ordena para o merge_asof
     df_1h = df_1h.sort_values('timestamp')
