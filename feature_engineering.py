@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import ta
 import os
+import matplotlib.pyplot as plt
 
 def apply_indicators(df, prefix=""):
     """
@@ -123,6 +124,36 @@ def label_zigzag(df, threshold=0.03):
                 
     return df
 
+def plot_zigzag(df, filename="plots/zigzag_ground_truth.png"):
+    """
+    Plota o preço com os topos e fundos reais identificados pelo ZigZag para visualização.
+    """
+    plt.figure(figsize=(15, 7))
+    
+    # Vamos pegar os últimos 300 pontos para uma visualização clara (Janela de ~50 dias em 4h)
+    df_plot = df.iloc[-300:].copy()
+    
+    plt.plot(df_plot['timestamp'], df_plot['close'], label='Preço (Base 4h)', color='black', alpha=0.5)
+    
+    # Topos Reais (label = 1)
+    tops = df_plot[df_plot['label'] == 1]
+    plt.scatter(tops['timestamp'], tops['high'], color='red', label='Topo Confirmado (ZigZag)', marker='v', s=100)
+    
+    # Fundos Reais (label = 2)
+    bottoms = df_plot[df_plot['label'] == 2]
+    plt.scatter(bottoms['timestamp'], bottoms['low'], color='green', label='Fundo Confirmado (ZigZag)', marker='^', s=100)
+    
+    plt.title('Metodologia ZigZag: Rótulos de Topos e Fundos Reais (Target)')
+    plt.xlabel('Data/Hora')
+    plt.ylabel('Preço BTC (USDT)')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    
+    os.makedirs('plots', exist_ok=True)
+    plt.savefig(filename)
+    plt.close()
+    print(f"Gráfico do Ground Truth salvo com sucesso em: {filename}")
+
 if __name__ == "__main__":
     if os.path.exists("data/btc_historical_1h.parquet"):
         df_1h = pd.read_parquet("data/btc_historical_1h.parquet")
@@ -141,5 +172,8 @@ if __name__ == "__main__":
         df_processed.to_parquet(output_path, index=False)
         print(f"Dados processados 4h MTF salvos: {len(df_processed)} registros.")
         print(f"Distribuição:\n{df_processed['label'].value_counts()}")
+        
+        # Exporta o gráfico dos alvos (Ground Truth) para o TCC
+        plot_zigzag(df_processed)
     else:
         print("Execute data_handler.py primeiro.")
