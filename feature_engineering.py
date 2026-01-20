@@ -24,6 +24,19 @@ def apply_indicators(df, prefix=""):
     # Volatilidade
     df[f'bb_width{prefix}'] = ta.volatility.bollinger_wband(df['close'])
     
+    # ATR (Average True Range)
+    df[f'atr{prefix}'] = ta.volatility.average_true_range(df['high'], df['low'], df['close'], window=14)
+    
+    # ADX (Average Directional Index)
+    adx_obj = ta.trend.ADXIndicator(df['high'], df['low'], df['close'], window=14)
+    df[f'adx{prefix}'] = adx_obj.adx()
+    
+    # VWAP (Volume Weighted Average Price)
+    # Nota: VWAP costuma ser usado em sessões diárias, mas aqui usaremos uma versão contínua/acumulada
+    df[f'vwap{prefix}'] = ta.volume.volume_weighted_average_price(df['high'], df['low'], df['close'], df['volume'], window=20)
+    # Feature importante: distância do preço para o VWAP
+    df[f'close_vs_vwap{prefix}'] = (df['close'] - df[f'vwap{prefix}']) / df[f'vwap{prefix}']
+    
     return df
 
 def apply_feature_engineering_mtf(df_1h, df_4h, df_1d):
@@ -48,8 +61,8 @@ def apply_feature_engineering_mtf(df_1h, df_4h, df_1d):
 
     # FIX Corregindo Look-ahead Bias MTF: Shift de 1 para garantir que usamos apenas dados do passado
     # Isso evita que a vela de 4h saiba o fechamento do dia antes dele acabar.
-    cols_1h = ['rsi_1h', 'macd_diff_1h', 'close_vs_sma20_1h']
-    cols_1d = ['rsi_1d', 'macd_diff_1d', 'close_vs_sma20_1d']
+    cols_1h = ['rsi_1h', 'macd_diff_1h', 'close_vs_sma20_1h', 'adx_1h', 'close_vs_vwap_1h']
+    cols_1d = ['rsi_1d', 'macd_diff_1d', 'close_vs_sma20_1d', 'adx_1d', 'close_vs_vwap_1d']
     
     df_1h[cols_1h] = df_1h[cols_1h].shift(1)
     df_1d[cols_1d] = df_1d[cols_1d].shift(1)
@@ -60,10 +73,12 @@ def apply_feature_engineering_mtf(df_1h, df_4h, df_1d):
     df_1d = df_1d.sort_values('timestamp')
     
     print("Mesclando tempos gráficos na base de 4h...")
-    # Mescla 1h em 4h (pegando o estado de 1h no momento da vela de 4h)
-    df_merged = pd.merge_asof(df_4h, df_1h[['timestamp', 'rsi_1h', 'macd_diff_1h', 'close_vs_sma20_1h']], on='timestamp')
+    # Mescla 1h em 4h
+    cols_to_merge_1h = ['timestamp', 'rsi_1h', 'macd_diff_1h', 'close_vs_sma20_1h', 'adx_1h', 'close_vs_vwap_1h']
+    df_merged = pd.merge_asof(df_4h, df_1h[cols_to_merge_1h], on='timestamp')
     # Mescla 1d em 4h
-    df_merged = pd.merge_asof(df_merged, df_1d[['timestamp', 'rsi_1d', 'macd_diff_1d', 'close_vs_sma20_1d']], on='timestamp')
+    cols_to_merge_1d = ['timestamp', 'rsi_1d', 'macd_diff_1d', 'close_vs_sma20_1d', 'adx_1d', 'close_vs_vwap_1d']
+    df_merged = pd.merge_asof(df_merged, df_1d[cols_to_merge_1d], on='timestamp')
     
     return df_merged
 
