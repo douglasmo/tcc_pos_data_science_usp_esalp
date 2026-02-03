@@ -68,19 +68,19 @@ def apply_feature_engineering_mtf(df_1h, df_4h, df_1d):
 
 def label_zigzag(df, threshold=0.03):
     """
-    Rotula topos e fundos usando a lógica ZigZag baseada na variação percentual.
-    threshold: alteração percentual necessária para confirmar uma reversão (ex: 0.03 = 3%)
+    Rotula topos e fundos usando a logica ZigZag baseada na variacao percentual.
+    threshold: alteracao percentual necessaria para confirmar uma reversao (ex: 0.03 = 3%)
     """
     df['label'] = 0
     highs = df['high'].values
     lows = df['low'].values
-    
+
     trend = 0  # 1 para alta, -1 para baixa
     current_max = highs[0]
     current_max_idx = 0
     current_min = lows[0]
     current_min_idx = 0
-    
+
     for i in range(1, len(df)):
         if trend == 0:
             if highs[i] > current_max:
@@ -89,7 +89,7 @@ def label_zigzag(df, threshold=0.03):
             if lows[i] < current_min:
                 current_min = lows[i]
                 current_min_idx = i
-            
+
             if highs[i] >= current_min * (1 + threshold):
                 trend = 1
                 current_max = highs[i]
@@ -98,31 +98,30 @@ def label_zigzag(df, threshold=0.03):
                 trend = -1
                 current_min = lows[i]
                 current_min_idx = i
-                
-        elif trend == 1:  # Tendência de alta, procurando por um topo
+
+        elif trend == 1:  # Tendencia de alta, procurando por topo
             if highs[i] > current_max:
                 current_max = highs[i]
                 current_max_idx = i
-            
+
             if lows[i] <= current_max * (1 - threshold):
                 df.at[df.index[current_max_idx], 'label'] = 1  # Topo
                 trend = -1
                 current_min = lows[i]
                 current_min_idx = i
-                
-        elif trend == -1:  # Tendência de baixa, procurando por um fundo
+
+        elif trend == -1:  # Tendencia de baixa, procurando por fundo
             if lows[i] < current_min:
                 current_min = lows[i]
                 current_min_idx = i
-                
+
             if highs[i] >= current_min * (1 + threshold):
                 df.at[df.index[current_min_idx], 'label'] = 2  # Fundo
                 trend = 1
                 current_max = highs[i]
                 current_max_idx = i
-                
-    return df
 
+    return df
 if __name__ == "__main__":
     if os.path.exists("data/btc_historical_1h.parquet"):
         df_1h = pd.read_parquet("data/btc_historical_1h.parquet")
@@ -132,7 +131,7 @@ if __name__ == "__main__":
         print("Iniciando Engenharia de Features Multi-Timeframe centrada em 4h...")
         df_processed = apply_feature_engineering_mtf(df_1h, df_4h, df_1d)
         
-        print("Rotulando pivôs de 4h com ZigZag (Threshold: 3%)...")
+        print("Rotulando pivos de 4h com ZigZag (Threshold: 3%)...")
         df_processed = label_zigzag(df_processed, threshold=0.03)
         
         df_processed = df_processed.dropna().reset_index(drop=True)

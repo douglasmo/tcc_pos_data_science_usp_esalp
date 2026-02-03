@@ -1,0 +1,24 @@
+﻿Falhas e resultados negativos (tentativas anteriores)
+
+1) ZigZag adaptativo por volatilidade (ATR) + histerese agressiva
+- k=1.1, confirm_bars=5
+- Resultado: poucos pivôs (Topo=27, Fundo=45), alta escassez de exemplos; precision caiu muito.
+
+2) ZigZag adaptativo por volatilidade (ATR) + histerese moderada
+- k=1.2, confirm_bars=4
+- Resultado: poucos pivôs (Topo=63, Fundo=90). Precision muito baixa e instabilidade no recall.
+
+3) Two-Stage (pivot vs nada -> topo vs fundo)
+- Aplicado a LR / RF / LSTM
+- Resultado: recall até aumentou em alguns casos, mas precision de topo/fundo ficou muito baixa.
+- Em cenários com poucos pivôs, o two-stage piorou estabilidade.
+
+4) Otimizar limiares visando recall macro (classes 1 e 2)
+- Resultado: aumentou recall, mas derrubou precision (muitos falsos positivos).
+
+5) Boost forte apenas na classe Topo
+- Resultado: recall de topo subiu, mas precision geral caiu e acurácia despencou em LR/LSTM.
+
+Observações gerais
+- Quando os pivôs ficam raros, modelos ficam instáveis e erram muito.
+- Random Forest foi o mais estável; LSTM ficou sensível a mudanças de rótulo/limiar.
